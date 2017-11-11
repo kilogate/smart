@@ -44,6 +44,14 @@
             <!-- 不参与编译，只在运行时使用 -->
             <scope>runtime</scope>
         </dependency>
+
+        <!-- JUnit -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
