@@ -1,6 +1,7 @@
 package com.kilogate.chapter2.helper;
 
 import com.kilogate.chapter2.util.PropertiesUtil;
+import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.handlers.BeanHandler;
 import org.apache.commons.dbutils.handlers.BeanListHandler;
@@ -8,8 +9,11 @@ import org.apache.commons.dbutils.handlers.MapListHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -21,26 +25,22 @@ import java.util.*;
  **/
 public class DatabaseHelper {
     private static Logger logger = LoggerFactory.getLogger(DatabaseHelper.class);
-    private static final QueryRunner QUERY_RUNNER = new QueryRunner();
-    private static final ThreadLocal<Connection> CONNECTION_HOLDER = new ThreadLocal<>();
 
-    private static String DRIVER;
-    private static String URL;
-    private static String USERNAME;
-    private static String PASSWORD;
+    private static final ThreadLocal<Connection> CONNECTION_HOLDER;
+    private static final QueryRunner QUERY_RUNNER;
+    private static final BasicDataSource DATA_SOURCE;
 
     static {
-        Properties properties = PropertiesUtil.loadProperties("config.properties");
-        DRIVER = properties.getProperty("jdbc.driver");
-        URL = properties.getProperty("jdbc.url");
-        USERNAME = properties.getProperty("jdbc.username");
-        PASSWORD = properties.getProperty("jdbc.password");
+        CONNECTION_HOLDER = new ThreadLocal<>();
+        QUERY_RUNNER = new QueryRunner();
 
-        try {
-            Class.forName(DRIVER);
-        } catch (ClassNotFoundException e) {
-            logger.error("加载 JDBC 驱动器异常, DRIVER: {}", DRIVER, e);
-        }
+        Properties properties = PropertiesUtil.loadProperties("config.properties");
+
+        DATA_SOURCE = new BasicDataSource();
+        DATA_SOURCE.setDriverClassName(properties.getProperty("jdbc.driver"));
+        DATA_SOURCE.setUrl(properties.getProperty("jdbc.url"));
+        DATA_SOURCE.setUsername(properties.getProperty("jdbc.username"));
+        DATA_SOURCE.setPassword(properties.getProperty("jdbc.password"));
     }
 
     /**
@@ -112,8 +112,6 @@ public class DatabaseHelper {
             entityList = QUERY_RUNNER.query(getConnection(), sql, new BeanListHandler<T>(entityClass), params);
         } catch (SQLException e) {
             logger.error("查询实体列表异常, sql: {}, params: {}", sql, Arrays.toString(params), e);
-        } finally {
-            closeConnection();
         }
 
         return entityList;
@@ -129,8 +127,6 @@ public class DatabaseHelper {
             entity = QUERY_RUNNER.query(getConnection(), sql, new BeanHandler<T>(entityClass), params);
         } catch (SQLException e) {
             logger.error("查询单个实体异常, sql: {}, params: {}", sql, Arrays.toString(params), e);
-        } finally {
-            closeConnection();
         }
 
         return entity;
@@ -146,8 +142,6 @@ public class DatabaseHelper {
             rows = QUERY_RUNNER.update(getConnection(), sql, params);
         } catch (SQLException e) {
             logger.error("执行更新语句异常, sql: {}, params: {}", sql, Arrays.toString(params), e);
-        } finally {
-            closeConnection();
         }
 
         return rows;
@@ -163,8 +157,6 @@ public class DatabaseHelper {
             result = QUERY_RUNNER.query(getConnection(), sql, new MapListHandler(), params);
         } catch (SQLException e) {
             logger.error("执行查询语句异常, sql: {}, params: {}", sql, Arrays.toString(params), e);
-        } finally {
-            closeConnection();
         }
 
         return result;
@@ -177,7 +169,7 @@ public class DatabaseHelper {
         Connection connection = CONNECTION_HOLDER.get();
         if (connection == null) {
             try {
-                connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+                connection = DATA_SOURCE.getConnection();
             } catch (SQLException e) {
                 logger.error("获取数据库连接异常", e);
             } finally {
@@ -189,19 +181,18 @@ public class DatabaseHelper {
     }
 
     /**
-     * 关闭数据库连接
+     * 执行 SQL 文件
      */
-    public static void closeConnection() {
-        Connection connection = CONNECTION_HOLDER.get();
-        if (connection != null) {
-            try {
-                connection.close();
-            } catch (SQLException e) {
-                logger.error("关闭数据库连接异常", e);
-            } finally {
-                CONNECTION_HOLDER.remove();
+    public static void executeSqlFile(String filePath) {
+        InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(filePath);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        String sql;
+        try {
+            while ((sql = reader.readLine()) != null) {
+                DatabaseHelper.executeUpdate(sql);
             }
-
+        } catch (IOException e) {
+            logger.error("执行 SQL 文件异常, filePath: {}", filePath, e);
         }
     }
 
