@@ -16,13 +16,35 @@ import java.util.List;
 public class CustomerServiceTest {
     private CustomerService customerService;
 
-    public CustomerServiceTest(CustomerService customerService) {
+    @Before
+    public void init() {
         this.customerService = new CustomerService();
     }
 
-    @Before
-    public void init() {
-        // TODO 初始化数据库
+    @Test
+    public void createCustomerTest() throws Exception {
+        HashMap<String, Object> fieldMap = new HashMap<>();
+        fieldMap.put("name", "customer100");
+        fieldMap.put("contact", "John");
+        fieldMap.put("telephone", "13777777777");
+        boolean result = customerService.createCustomer(fieldMap);
+        Assert.assertTrue(result);
+    }
+
+    @Test
+    public void deleteCustomerTest() throws Exception {
+        long id = 3;
+        boolean result = customerService.deleteCustomer(id);
+        Assert.assertTrue(result);
+    }
+
+    @Test
+    public void updateCustomerTest() throws Exception {
+        long id = 3;
+        HashMap<String, Object> fieldMap = new HashMap<>();
+        fieldMap.put("contact", "Eric");
+        boolean result = customerService.updateCustomer(id, fieldMap);
+        Assert.assertTrue(result);
     }
 
     @Test
@@ -37,32 +59,5 @@ public class CustomerServiceTest {
         Customer customer = customerService.getCustomer(id);
         Assert.assertNotNull(customer);
     }
-
-    @Test
-    public void createCustomerTest() throws Exception {
-        HashMap<String, Object> fieldMap = new HashMap<>();
-        fieldMap.put("name", "customer100");
-        fieldMap.put("contact", "John");
-        fieldMap.put("telephone", "13777777777");
-        boolean result = customerService.createCustomer(fieldMap);
-        Assert.assertTrue(result);
-    }
-
-    @Test
-    public void updateCustomerTest() throws Exception {
-        long id = 1;
-        HashMap<String, Object> fieldMap = new HashMap<>();
-        fieldMap.put("contact", "Eric");
-        boolean result = customerService.updateCustomer(id, fieldMap);
-        Assert.assertTrue(result);
-    }
-
-    @Test
-    public void deleteCustomerTest() throws Exception {
-        long id = 1;
-        boolean result = customerService.deleteCustomer(id);
-        Assert.assertTrue(result);
-    }
-
 
 }

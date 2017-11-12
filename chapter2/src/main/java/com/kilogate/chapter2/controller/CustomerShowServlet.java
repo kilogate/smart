@@ -20,7 +20,6 @@ public class CustomerShowServlet extends HttpServlet {
      */
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String id = req.getParameter("id");
         // TODO
     }
 }

@@ -16,7 +16,7 @@ import java.io.IOException;
 @WebServlet("/customer_delete")
 public class CustomerDeleteServlet extends HttpServlet {
     /**
-     * 删除客户
+     * 处理删除客户请求
      */
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {

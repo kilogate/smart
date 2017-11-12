@@ -24,7 +24,7 @@ public class CustomerEditServlet extends HttpServlet {
     }
 
     /**
-     * 编辑客户
+     * 处理编辑客户请求
      */
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
